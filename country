@@ -1,0 +1,76 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var country = "";
+var format = "";
+var zip_path = "";
+var zip_file = "";
+
+function downloadCountryData(){
+  var http = require('http');
+  var fs = require('fs');
+  var url = "http://data.biogeo.ucdavis.edu/data/gadm2/" + format + "/" + country + "_adm.zip";
+  zip_path = "data/"+country + "_adm";
+  zip_file = zip_path + '.zip';
+
+  var file = fs.createWriteStream(zip_path + ".zip");
+  var request = http.get(url, function(response) {
+    console.log("downloading file: " + zip_file);
+    response.pipe(file);
+    file.on('finish', function() {
+      console.log("finished download")
+      file.close(unzipCountryData);
+    });
+  });
+}
+
+function unzipCountryData(){
+  var AdmZip = require('adm-zip');
+  console.log("unzip country: " + country + " data");
+  var zip = new AdmZip(zip_file);
+  var zipEntries = zip.getEntries();
+  zipEntries.forEach(function(zipEntry) {
+    console.log(zipEntry.entryName); // outputs entry name
+  });
+  console.log("Extracting all");
+  zip.extractAllTo(zip_path, true);
+  console.log("finished unzip");
+  convertCountryDataToGeojson();
+}
+
+function convertCountryDataToGeojson (){
+  console.log("converting country: " + country + " shapefiles to geojson");
+  var sys = require('sys')
+  var exec = require('child_process').exec;
+  [0, 1, 2, 3].forEach(function(count){
+    console.log("converting " + country + "_adm" + count + ".shp to geojson");
+    var command = "mapshaper -p 0.1 ./data/" + country + "_adm/" + country + "_adm" + count + ".shp -f geojson -o ./data/" + country + "_adm/" + country + "_adm" + count + ".geojson --auto-snap --encoding utf8";
+    exec(command, function(error, stdout, stderr){
+      sys.print('stdout: ' + stdout);
+      sys.print('stderr: ' + stderr);
+      if (error !== null) {
+        console.log('exec error: ' + error);
+      }
+    });
+  });
+}
+
+
+var program = require('commander');
+
+program
+  .version('0.0.1')
+  .option('-i, --iso <code>', 'Specify ISO Country Code', 'COL')
+  .option('-f, --format <type>', 'Specify Format', 'shp')
+  .parse(process.argv);
+
+if (program.iso && program.format){
+  console.log('  - %s ISO', program.iso);
+  console.log('  - %s format', program.format);
+  country = program.iso;
+  format = program.format;
+  downloadCountryData();
+}

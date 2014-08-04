@@ -1,0 +1,17 @@
+{
+  "name": "gadm_scrapper",
+  "version": "0.0.0",
+  "description": "convert to geojson all data from gdam.org",
+  "main": "index.js",
+  "dependencies": {
+    "adm-zip": "^0.4.4",
+    "commander": "^2.3.0",
+    "mapshaper": "^0.1.19"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Luis Porras",
+  "license": "MIT"
+}
