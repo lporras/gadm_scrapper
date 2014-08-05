@@ -33,10 +33,13 @@ function unzipCountryData(){
   var zip = new AdmZip(zip_file);
   var zipEntries = zip.getEntries();
   zipEntries.forEach(function(zipEntry) {
-    console.log(zipEntry.entryName); // outputs entry name
+    //console.log(zipEntry.entryName); // outputs entry name
+    if(zipEntry.entryName.match(/\w+\.shp/)){
+      zip.extractEntryTo(zipEntry.entryName, zip_path, false, true);
+    }
   });
-  console.log("Extracting all");
-  zip.extractAllTo(zip_path, true);
+  //console.log("Extracting all");
+  //zip.extractAllTo(zip_path, true);
   console.log("finished unzip");
   convertCountryDataToGeojson();
 }
