@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
-/**
- * Module dependencies.
- */
-
 var country = "";
+var country_name = "";
 var format = "";
 var zip_path = "";
 var zip_file = "";
@@ -13,7 +10,7 @@ function downloadCountryData(){
   var http = require('http');
   var fs = require('fs');
   var url = "http://data.biogeo.ucdavis.edu/data/gadm2/" + format + "/" + country + "_adm.zip";
-  zip_path = "data/"+country + "_adm";
+  zip_path = "data/" + country + "_adm";
   zip_file = zip_path + '.zip';
 
   var file = fs.createWriteStream(zip_path + ".zip");
@@ -29,17 +26,14 @@ function downloadCountryData(){
 
 function unzipCountryData(){
   var AdmZip = require('adm-zip');
-  console.log("unzip country: " + country + " data");
+  console.log("unzip country-iso: " + country + " country_name: " + country_name + " data");
   var zip = new AdmZip(zip_file);
   var zipEntries = zip.getEntries();
   zipEntries.forEach(function(zipEntry) {
-    //console.log(zipEntry.entryName); // outputs entry name
     if(zipEntry.entryName.match(/\w+\.shp/)){
       zip.extractEntryTo(zipEntry.entryName, zip_path, false, true);
     }
   });
-  //console.log("Extracting all");
-  //zip.extractAllTo(zip_path, true);
   console.log("finished unzip");
   convertCountryDataToGeojson();
 }
@@ -50,9 +44,10 @@ function convertCountryDataToGeojson (){
   var exec = require('child_process').exec;
   [0, 1, 2, 3].forEach(function(count){
     console.log("converting " + country + "_adm" + count + ".shp to geojson");
-    var command = "mapshaper -p 0.1 ./data/" + country + "_adm/" + country + "_adm" + count + ".shp -f geojson -o ./data/" + country + "_adm/" + country + "_adm" + count + ".geojson --auto-snap --encoding utf8";
+    var command = "mapshaper -p 0.1 ./data/" + country + "_adm/" + country + "_adm" + count + ".shp -f geojson -o ./data/" + country + "_adm/" + country_name + "_adm" + count + ".geojson --auto-snap --encoding utf8";
+    console.log("running: "+ command);
     exec(command, function(error, stdout, stderr){
-      sys.print('stdout: ' + stdout);
+      //sys.print('stdout: ' + stdout);
       sys.print('stderr: ' + stderr);
       if (error !== null) {
         console.log('exec error: ' + error);
@@ -67,13 +62,16 @@ var program = require('commander');
 program
   .version('0.0.1')
   .option('-i, --iso <code>', 'Specify ISO Country Code', 'COL')
+  .option('-c, --country <code>', 'Specify Country Name', 'colombia')
   .option('-f, --format <type>', 'Specify Format', 'shp')
   .parse(process.argv);
 
 if (program.iso && program.format){
   console.log('  - %s ISO', program.iso);
+  console.log('  - %s Country', program.country);
   console.log('  - %s format', program.format);
   country = program.iso;
+  country_name = program.country;
   format = program.format;
   downloadCountryData();
 }
