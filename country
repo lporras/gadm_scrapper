@@ -42,16 +42,24 @@ function convertCountryDataToGeojson (){
   console.log("converting country: " + country + " shapefiles to geojson");
   var sys = require('sys')
   var exec = require('child_process').exec;
-  [0, 1, 2, 3].forEach(function(count){
-    console.log("converting " + country + "_adm" + count + ".shp to geojson");
-    var command = "mapshaper -p 0.1 ./data/" + country + "_adm/" + country + "_adm" + count + ".shp -f geojson -o ./data/" + country + "_adm/" + country_name + "_adm" + count + ".geojson --auto-snap --encoding utf8";
-    console.log("running: "+ command);
-    exec(command, function(error, stdout, stderr){
-      //sys.print('stdout: ' + stdout);
-      sys.print('stderr: ' + stderr);
-      if (error !== null) {
-        console.log('exec error: ' + error);
-      }
+  var fs = require('fs');
+
+  fs.readdir(zip_path, function (err, files) {
+    if (err) throw err;
+    files.forEach( function (file) {
+      console.log("converting " + file + " to geojson");
+      var command = "mapshaper -p 0.1 " + zip_path + "/" +  file
+      command = command + " -f geojson -o " + zip_path + "/" + file.replace(".shp", ".geojson")
+      command = command + " --auto-snap --encoding utf8"
+      console.log("command: "+ command)
+      exec(command, function(error, stdout, stderr){
+        if (error !== null) {
+         console.log('exec error: ' + error);
+         sys.print('stderr: ' + stderr);
+        }else{
+          sys.print('stdout: ' + stdout);
+        }
+      });
     });
   });
 }
